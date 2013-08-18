@@ -32,7 +32,7 @@
 #define FIRST_DOW 4 + FIRST_DOW_HELPER  // use this in code for determine what is first day of week
 #define NAMELEN 15                      // maximum length of POST name
 #define VALUELEN 15                     // maximum length of POST value
-#define ntpSyncTime SECS_PER_HOUR * 12  // how often sync time, in seconds
+#define ntpSyncTime SECS_PER_HOUR * 4   // how often sync time, in seconds
 #define NTP_PACKET_SIZE 48              // NTP time stamp is in the first 48 bytes of the message
 #define localPort 8888                  // local port to listen for UDP packets
 #define FAILED 2                        // command num of failure msg
@@ -48,10 +48,14 @@
 #define TRANSMITTER_PIN 7               // where's the transmitter?, pin 7
 
 // mode listing
-#define MODE_NORMAL 0
-#define MODE_VACATION 1
-#define MODE_AUTOOFF 2
-#define MODE_SPECIAL 3
+#define MODE_NORMAL 0                   // bits ....00xx
+#define MODE_VACATION 1                 // bits ....01xx
+#define MODE_AUTOOFF 2                  // bits ....10xx
+#define MODE_SPECIAL 3                  // bits ....11xx
+// type listing
+#define TYPE_NORMAL 0                   // bits ....xx00
+#define TYPE_TIMEDRIVEN 1               // bits ....xx01
+#define TYPE_COUNTED 2                  // bits ....xx10
 
 // ----------------------- VARIABLES -----------------------
 // setup structure
@@ -211,8 +215,8 @@ char timeStr[3] = "00";
   return temp;
 }
 
-void setVacationMode() {
-  if (value != "-1") vacEnd = now() + (atol(value) * SECS_PER_DAY);
+void setVacationMode(int days) {
+  if (days > 0) vacEnd = now() + (days * SECS_PER_DAY);
 }
 
 char *getName(char a, byte n) {
@@ -479,7 +483,7 @@ void printPageStart(byte type) {
 }
 
 void printSwitches(boolean switching) {
-P(a1) = " onClick=\"document.location.href='swt.html?";                     // if you change switch.html you MUST change link here !!!
+P(a1) = " onClick=\"document.location.href='swt.html?";                     // if you change swt.html you MUST change link here !!!
 P(a20) = "cmd=";
 P(a21) = "add=";
 P(a3) = "';\" style=\"cursor:pointer;\">";
@@ -499,7 +503,7 @@ byte special, n;
       type = getType(n);
         
       special = 0;
-      if (type == 1) special = 1;
+      if (type == TYPE_TIMEDRIVEN) special = 1;
         else if (mode != MODE_NORMAL) special = 2;
 
       if (dev.status[n] == true) webserver.printP(divswon);
@@ -545,7 +549,7 @@ byte special, n;
 
 void switchesCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail, bool tail_complete) {
 URLPARAM_RESULT rc; 
-byte a;
+int a;
  
   if (server.checkCredentials(usr) || server.checkCredentials(adm)) {
     printPageStart(SWITCH_POS); 
@@ -566,7 +570,7 @@ byte a;
                       setAutoOff(a);
                     }
             
-            if (strcmp(name, "vac") == 0) setVacationMode();
+            if (strcmp(name, "vac") == 0) setVacationMode(a);
             
             if (strcmp(name, "clk") == 0) setTime(getTimeAndDate());
             
@@ -761,7 +765,7 @@ int i, j;
       }
       
       server.printP(txt1);
-      if (vacEnd > 0) tmpint = (vacEnd - now()) / 86400;
+      if (vacEnd > 0) tmpint = (vacEnd - now()) / SECS_PER_DAY;
       itoa(tmpint, tmpstr, 10);
       printTextBox(false, 3, "v00", tmpstr);
       server.printP(br);
@@ -833,7 +837,7 @@ char index[3];
           getTimeAndDate();
           break;
         case 'v':
-          setVacationMode();
+          setVacationMode(v);
           break;
         case 's':
           stp.specCode[idx] = v;
@@ -884,7 +888,6 @@ void transmit(int nHighPulses, int nLowPulses) {
 }
 
 void send01(unsigned long code) {
-  RemoteReceiver::disable(); 
   for (byte n = 0; n < REPEAT_TRANSMIT; n++) {
     for (byte i = 0; i < 24; i++) {
       if (bitRead(code, 23 - i) == 1) transmit(3, 1);
@@ -893,14 +896,13 @@ void send01(unsigned long code) {
     // send sync
     transmit(1, 31);
   }
-  RemoteReceiver::enable();
 }
 
 // check for automatically switched off outlet, if so set variable. Outlet cannot be time driven or counted
 void setAutoOff(byte idx) {
   // its simple, must be type 0 and mode autooff (2), so 2bits=00, 2bits=10
   for (byte i = 0; i  < EVENTS_MAX; i++) {
-    if (events.device[i] == idx && dev.type[idx] == MODE_AUTOOFF) {
+    if (events.device[i] == idx && getMode(idx) == MODE_AUTOOFF) {              // if you find first events with this outlet and this outlet is AutoOff setup values and exit loop
       dev.count[idx] = now() + (hour(events.t_off[i]) * SECS_PER_HOUR) + (minute(events.t_off[i]) * SECS_PER_MIN);
       break;
     }
@@ -936,15 +938,10 @@ boolean rcvCmd = false;
 // switch device on or off
 void switchOnOff(byte idx, boolean onoff) {
   dev.status[idx] = onoff;
-  if (getMode(idx) == MODE_SPECIAL) {
-    send01(stp.specCode[getChannel(idx)]);
-    return;
-  }
-  
   // disable receiving, not to interfere with actual command
   RemoteReceiver::disable();
-  // switch outlet on/off
-  actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
+  if (getMode(idx) == MODE_SPECIAL) send01(stp.specCode[getChannel(idx)]);
+    else actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
   // enable receiving
   RemoteReceiver::enable();
 }
@@ -982,16 +979,16 @@ byte mode, dIdx;
     if (dIdx == NO_DEV) continue;                  // if device index in events are bigger then device list size, then this event isn't processible
     mode = getMode(dIdx);
 
-    if (vacEnd < 1 || mode == MODE_VACATION) {
+    if (vacEnd == 0 || mode == MODE_VACATION) {
       switch (getType(dIdx)) {
-        case 0:
+        case TYPE_NORMAL:
           if (mode == MODE_AUTOOFF && nw >= dev.count[dIdx] && dev.status[dIdx] == true) switchOnOff(dIdx, false);
           break;
-        case 1:
+        case TYPE_TIMEDRIVEN:
           if (isTime(i, dIdx, true) == true) switchOnOff(dIdx, true);
           if (isTime(i, dIdx, false) == true) switchOnOff(dIdx, false);
           break;
-        case 2:
+        case TYPE_COUNTED:
           nM = nowH * 60 + nowM;
           if (dev.status[i]) {
             cM = hour(dev.count[dIdx]) * 60 + minute(dev.count[dIdx]);
@@ -1007,7 +1004,6 @@ byte mode, dIdx;
       } // end switch
     } // end if
   } // end for
-
 }
 
 
