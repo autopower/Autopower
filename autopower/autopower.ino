@@ -214,6 +214,7 @@ char timeStr[3] = "00";
 
 void setVacationMode(int days) {
   if (days > 0) vacEnd = now() + (days * SECS_PER_DAY);
+    else vacEnd = 0;
 }
 
 char *getName(char a, byte n) {
@@ -741,16 +742,18 @@ int i, j;
 
 void setupPost(WebServer &server, WebServer::ConnectionType type, char *url_tail, bool tail_complete) {
 byte i, j, idx;
-unsigned long v;
+long v;
 static byte offDay[EVENTS_MAX], onDay[EVENTS_MAX];
 char index[3];
+boolean repeat;
 
   if(type == WebServer::POST) {
     for (i == 0; i < EVENTS_MAX; i++) {
       onDay[i] = 0;
       offDay[i] = 0;
     }
-    while (server.readPOSTparam(name, NAMELEN, value, VALUELEN)) {
+    do {
+      repeat = server.readPOSTparam(name, NAMELEN, value, VALUELEN);
       index[0] = name[1];
       index[1] = name[2];
       idx = atoi(index);
@@ -800,7 +803,7 @@ char index[3];
           stp.specCode[idx] = v;
           break;
       }
-    }
+    } while (repeat);
     for (i = 0; i < EVENTS_MAX; i++) {
       events.d_on[i] = onDay[i];
       events.d_off[i] = offDay[i];
@@ -836,6 +839,7 @@ void failureCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
 #define PULSE_LENGTH 350
 #define REPEAT_TRANSMIT 10
 
+#ifndef DEBUG_PRG
 void transmit(int nHighPulses, int nLowPulses) {
   digitalWrite(TRANSMITTER_PIN, HIGH);
   delayMicroseconds(PULSE_LENGTH * nHighPulses);
@@ -853,6 +857,7 @@ void send01(unsigned long code) {
     transmit(1, 31);
   }
 }
+#endif
 
 // check for automatically switched off outlet, if so set variable. Outlet cannot be time driven or counted
 void setAutoOff(byte idx) {
@@ -896,8 +901,10 @@ void switchOnOff(byte idx, boolean onoff) {
   dev.status[idx] = onoff;
   // disable receiving, not to interfere with actual command
   RemoteReceiver::disable();
+  #ifndef DEBUG_PRG
   if (getMode(idx) == MODE_SPECIAL) send01(stp.specCode[getChannel(idx)]);
     else actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
+  #endif
   // enable receiving
   RemoteReceiver::enable();
 }
@@ -986,12 +993,16 @@ void setup() {
  
   // init webserver
   webserver.begin();
+  #ifndef DEBUG_PRG
+  webserver.addCommand("swt.html", &switchesCmd);
   webserver.setDefaultCommand(&switchesCmd);
   webserver.setFailureCommand(&failureCmd); 
-  webserver.addCommand("swt.html", &switchesCmd);
+  #endif
   webserver.addCommand("stp.html", &setupCmd);
-  #ifndef DEBUG_PRG
-  webserver.addCommand("setuppost", &setupPost); 
+  webserver.addCommand("setuppost", &setupPost);
+  #ifdef DEBUG_PRG
+  Serial.begin(9600);
+  Serial.println("Go!");
   #endif
 
   // start receiver
