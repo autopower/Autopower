@@ -15,17 +15,17 @@ You will need these parts:
 * Soldering iron and simple wire, if you wanna extend range of receiver. 
 
 ##Where you can get these gadgets?
-* [Arduino](http://arduino.cc/en/Main/ArduinoBoardUno)
-* [Ethernet shield](http://arduino.cc/en/Main/ArduinoEthernetShield)
-* [Arduino Ethernet](http://arduino.cc/en/Main/ArduinoBoardEthernet)
-* [433MHz receiver and transmitter](http://www.seeedstudio.com/depot/433mhz-rf-link-kit-p-127.html)
+* [Arduino](http://arduino.cc/en/Main/ArduinoBoardUno),
+* [Ethernet shield](http://arduino.cc/en/Main/ArduinoEthernetShield),
+* [Arduino Ethernet](http://arduino.cc/en/Main/ArduinoBoardEthernet),
+* [433MHz receiver and transmitter](http://www.seeedstudio.com/depot/433mhz-rf-link-kit-p-127.html),
 * jumper wires, check your local store with electronic gadgets or dx.com.
 
 
 #Libraries you'll need to download
 * Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
-* [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML
-* Arduino [time library](http://playground.arduino.cc/Code/time)
+* [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML,
+* Arduino [time library](http://playground.arduino.cc/Code/time),
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
 
 
