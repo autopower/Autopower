@@ -1,9 +1,5 @@
 #Autopower
-
-Simple device managing power outlets - RF remote controlled. DIY device based on Arduino with Ethernet shield and 433MHz transmitter and receiver.
-
-Check out our [facebook profile](https://www.facebook.com/autopow).
-
+Simple device managing power outlets - RF remote controlled. DIY device based on Arduino with Ethernet shield and 433MHz transmitter and receiver. Check out our [facebook profile](https://www.facebook.com/autopow).
 
 ##Skull & Bones
 You will need these parts:
@@ -19,13 +15,11 @@ You will need these parts:
 * [433MHz receiver and transmitter](http://www.seeedstudio.com/depot/433mhz-rf-link-kit-p-127.html),
 * jumper wires, check your local store with electronic gadgets or dx.com.
 
-
 ##Libraries you'll need to download
 * Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
 * [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML,
 * Arduino [time library](http://playground.arduino.cc/Code/time),
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
-
 
 ##How to
 To correctly setup Autpower, you must first edit, compile and upload sketch setupap.ino (in directory setupap/).
@@ -35,6 +29,7 @@ Please edit following variables or constants:
 * if you want more that 20 events, edit `#define EVENTS_MAX 20`,
 * if you have more or less that 3 special (plain) RF codes edit `#define SPECIAL_MAX 3` and then edit `stp.specCode` array,
 * in `setup()`, if you don't want DHCP, set `stp.dhcp` to false and edit `ip, dns, gateway` and `netmask` according tou your enviroment.
+* 
 Please note that Arduino Uno have limited SRAM, so take a look at size of variables structures.
 
 Then you must edit (according to changes you made above), compile and upload sketch autopower.ino (from autopower/ directory):
@@ -95,11 +90,15 @@ You can operate outlet in one of these three modes:
 * Normal [Nm], operated like classic RC outlet, can be switched on and off via button on webpage. Outlet can be cycled via simple POST request.
 * Time event driven [Tm], outlet can be switched on and off, in defined time and day.
 * Counted [Cn], outlet is switched on every X minutes for defined moment of Y minutes.
+
+
 If you need extend funcionality of outlet, you can do it by setting flag:
 * Normal [Nm], no extension to functionality,
 * Vacation free [Vc], outlet will be switched (if Time event driven or Counted) even if Autopower is in vacation mode, indicated by # character.,
 * Auto Off [Ao], outlet will be turned off after time period (edit this in setup), indictaed by ! character,
 * Special [Sp], outlet will be turned on or off viac `specCode` array. Position of signal in `specCode` array is dones byt choosing Chanell in setup dialog. Indicated by S character.
+
+ 
 If outlet is in Time event driven mode, it's switched on time can be extended byt plus sign displayed next to the outlet name.
 
 ##Other features
