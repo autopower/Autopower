@@ -23,10 +23,10 @@ You will need these parts:
 
 
 #Libraries you'll need to download
-Library for sending and receiving RF 433MHz commands: https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home 
-Webduino library for processing HTTP/HTML: https://github.com/sirleech/Webduino
-Arduino time library: http://playground.arduino.cc/Code/time
-Other libraries are included in default installation of Arduino IDE 1.0.5 (http://arduino.cc/en/Main/Software).
+* Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
+* [Webduino library] for processing HTTP/HTML(https://github.com/sirleech/Webduino)
+* Arduino [time library](http://playground.arduino.cc/Code/time)
+Other libraries are included in default installation of [Arduino IDE] 1.0.5 (http://arduino.cc/en/Main/Software).
 
 
 #How to
