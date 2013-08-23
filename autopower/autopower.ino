@@ -25,8 +25,6 @@
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
 #define SPECIAL_MAX 3                   // maximum number of special codes
-#define FIRST_DOW_HELPER 1              // define first day of week, 0=Sunday, 1=Monday
-#define FIRST_DOW 4 + FIRST_DOW_HELPER  // use this in code for determine what is first day of week
 #define NAMELEN 15                      // maximum length of POST name
 #define VALUELEN 15                     // maximum length of POST value
 #define ntpSyncTime SECS_PER_HOUR * 4   // how often sync time, in seconds
@@ -981,9 +979,8 @@ void setup() {
 
   // start network DHCP or not
   if (stp.dhcp == true) {
-    if (Ethernet.begin(stp.mac) == 0)  
-      // no point in carrying on, so do nothing forevermore:
-      for(;;) ;
+    do {
+    } while (Ethernet.begin(stp.mac) == 0); 
   } else Ethernet.begin(stp.mac, stp.ip, stp.dnsip, stp.gw, stp.mask);
   
   // get NTP
