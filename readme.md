@@ -21,7 +21,12 @@ You will need these parts:
 * Arduino [time library](http://playground.arduino.cc/Code/time),
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
 
-##How to
+##How to setup hardware
+Connect `DATA` pin of receiver to pin `digital 2` of Arduino (this is interrupt 0). VCC and GND connect to `5V` and `GND` on Arduino.
+Transmitter `DATA` pin connect to pin `digital 7` of Arduino (if you choose other pin, please change `TRANSMITTER_PIN` in `autopower.ino`). VCC and GND connect to `Vin` and `GND` of Arduino.
+Its recommended to connect 9V power adapter to enhance transmit range.
+
+##How to setup software
 To correctly setup Autpower, you must first edit, compile and upload sketch `setupap.ino` (in directory setupap/).
 Please edit following variables or constants:
 * if you need more that 12 characters for device name, change `#define NAMES_MAX 12`,
