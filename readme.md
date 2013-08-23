@@ -100,13 +100,25 @@ You can operate outlet in one of these three modes:
 If you need extend funcionality of outlet, you can do it by setting flag:
 * Normal [Nm], no extension to functionality,
 * Vacation free [Vc], outlet will be switched (if Time event driven or Counted) even if Autopower is in vacation mode, indicated by # character.,
-* Auto Off [Ao], outlet will be turned off after time period (edit this in setup), indictaed by ! character,
+* Auto Off [Ao], outlet will be turned off after time period (edit this in setup), indicated by ! character,
 * Special [Sp], outlet will be turned on or off viac `specCode` array. Position of signal in `specCode` array is done by choosing channel (e.g. for position 0 in `specCode` choose channel 0) in setup dialog. Indicated by S character.
 
  
-If outlet is in Time event driven mode, it's switched on time can be extended byt plus sign displayed next to the outlet name.
+If outlet is in Time event driven mode, it's on time can be extended byt plus sign displayed next to the outlet name.
 
 ##Other features
 If you click on the clock, time will be renewed by time server.
 If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need turn off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
 
+##Examples
+* Setup outlet 1, channel 31, address A, time driven, no flag.
+* Setup outlet 2, channel 31, address B, normal, auto off.
+* Setup outlet 3, channel 0, address A, time drive, special.
+* Setup event 1, with outlet 1, turn on everyday at 8:00, turn off everyday at 20:00.
+* Setup event 2, with outlet 2, turn on whatever, turn off 01:20, no day selected. 
+* Setup event 3, with outlet 3, turn on Sat, Sun, 20:30, turn off Sat, Sun, 22:30.
+
+
+If you manually turn on outlet 2, it'll be turned off after 1 hour and 20 minutes. Use it for example cell phone charger.
+At Sat and Sun, 20:30 Autopower will send plain signal from `stp.specCode` position 0. And the same signal will be send at 22:30. Ideal for LED dimmers etc.
+Everyday at 8:00 will Autopower turn on outlet 1, which will be turned off at 20:00.
