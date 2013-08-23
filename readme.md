@@ -96,7 +96,7 @@ If you need extend funcionality of outlet, you can do it by setting flag:
 * Normal [Nm], no extension to functionality,
 * Vacation free [Vc], outlet will be switched (if Time event driven or Counted) even if Autopower is in vacation mode, indicated by # character.,
 * Auto Off [Ao], outlet will be turned off after time period (edit this in setup), indictaed by ! character,
-* Special [Sp], outlet will be turned on or off viac `specCode` array. Position of signal in `specCode` array is dones byt choosing Chanell in setup dialog. Indicated by S character.
+* Special [Sp], outlet will be turned on or off viac `specCode` array. Position of signal in `specCode` array is done by choosing channel (e.g. for position 0 in `specCode` choose channel 0) in setup dialog. Indicated by S character.
 
  
 If outlet is in Time event driven mode, it's switched on time can be extended byt plus sign displayed next to the outlet name.
