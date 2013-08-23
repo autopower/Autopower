@@ -5,14 +5,14 @@ Simple device managing power outlets - RF remote controlled. DIY device based on
 Check out our [facebook profile](https://www.facebook.com/autopow).
 
 
-#Skull & Bones
+##Skull & Bones
 You will need these parts:
 * Arduino, you can choose from Arduino with Ethernet Shield or Arduino Ethernet. If you pickup Arduino Ethernet, there is [PoE](http://en.wikipedia.org/wiki/Power_over_Ethernet) version, which allows to use Ethernet wire as a power source for Arduino, e.g. one cable to Arduino means sleek look of boxed device.
 * 433MHz ASK transmitter, very cheap device. Please notice, that you need device with [ASK modulation](http://en.wikipedia.org/wiki/Amplitude-shift_keying). If you wanna use original remote controller, then you'll need 433MHz ASK receiver.
 * Male to female jumper wires, if you don't wanna solder wires. Or Male to Male jumper wires and prototyping PCB board.
 * Soldering iron and simple wire, if you wanna extend range of receiver. 
 
-##Where you can get these gadgets?
+###Where you can get these gadgets?
 * [Arduino](http://arduino.cc/en/Main/ArduinoBoardUno),
 * [Ethernet shield](http://arduino.cc/en/Main/ArduinoEthernetShield),
 * [Arduino Ethernet](http://arduino.cc/en/Main/ArduinoBoardEthernet),
@@ -20,14 +20,14 @@ You will need these parts:
 * jumper wires, check your local store with electronic gadgets or dx.com.
 
 
-#Libraries you'll need to download
+##Libraries you'll need to download
 * Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
 * [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML,
 * Arduino [time library](http://playground.arduino.cc/Code/time),
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
 
 
-#How to
+##How to
 To correctly setup Autpower, you must first edit, compile and upload sketch setupap.ino (in directory setupap/).
 Please edit following variables or constants:
 * if you need more that 12 characters for device name, change `#define NAMES_MAX 12`,
@@ -80,4 +80,29 @@ And finally admin/user name and password. Both are Base64 encoded, so feel free 
 Use [this page](http://www.base64encode.org/) to obtain Base64 encoded strings.
 
 If you have any question don't hesitate and use out Facebook profile to ask the questions.
+
+##Supported RC power outlets
+Supported remote controlled power outlets uses tribits switching, e.g. http://www.tipa.eu/en/radio-control-switch-kit-ta35/d-86641/
+You can setup these outlets and remote controller by 10 DIP switches, first 5 DIPs for channel and rest of them, for address – A to E.
+Virtually you can control 32*5 = 160 power oulets.
+
+##Addressing
+This is simple, setup your outlets and read out channel and address. Channel is first 5 DIP switches. If everything is off then channel is 0. Everything on, means you selected channel 31. Channel number is calculated as bits starting from least significant (16 + 8 + 4 + 2 + 1 = 31).
+Selecting address is even simplier. Just turn on desired DIP switch. First one is for A, last one for E.
+
+##Operating modes
+You can operate outlet in one of these three modes:
+* Normal [Nm], operated like classic RC outlet, can be switched on and off via button on webpage. Outlet can be cycled via simple POST request.
+* Time event driven [Tm], outlet can be switched on and off, in defined time and day.
+* Counted [Cn], outlet is switched on every X minutes for defined moment of Y minutes.
+If you need extend funcionality of outlet, you can do it by setting flag:
+* Normal [Nm], no extension to functionality,
+* Vacation free [Vc], outlet will be switched (if Time event driven or Counted) even if Autopower is in vacation mode, indicated by # character.,
+* Auto Off [Ao], outlet will be turned off after time period (edit this in setup), indictaed by ! character,
+* Special [Sp], outlet will be turned on or off viac `specCode` array. Position of signal in `specCode` array is dones byt choosing Chanell in setup dialog. Indicated by S character.
+If outlet is in Time event driven mode, it's switched on time can be extended byt plus sign displayed next to the outlet name.
+
+##Other features
+If you click on the clock, time will be renewed by time server.
+If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need trun off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
 
