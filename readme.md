@@ -22,7 +22,7 @@ You will need these parts:
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
 
 ##How to
-To correctly setup Autpower, you must first edit, compile and upload sketch setupap.ino (in directory setupap/).
+To correctly setup Autpower, you must first edit, compile and upload sketch `setupap.ino` (in directory setupap/).
 Please edit following variables or constants:
 * if you need more that 12 characters for device name, change `#define NAMES_MAX 12`,
 * if you need more or less that 16 devices, edit `#define DEV_MAX 16`,
@@ -30,9 +30,9 @@ Please edit following variables or constants:
 * if you have more or less that 3 special (plain) RF codes edit `#define SPECIAL_MAX 3` and then edit `stp.specCode` array,
 * in `setup()`, if you don't want DHCP, set `stp.dhcp` to false and edit `ip, dns, gateway` and `netmask` according tou your enviroment.
 * 
-Please note that Arduino Uno have limited SRAM, so take a look at size of variables structures.
+Please note that Arduino Uno have limited EEPROM and SRAM, so take a look at size of variables structures. Sketch `setupap.ino` writes values to EEPROM, so you MUST keep it under 1024bytes.
 
-Then you must edit (according to changes you made above), compile and upload sketch autopower.ino (from autopower/ directory):
+Then you must edit (according to changes you made above), compile and upload sketch `autopower.ino` (from autopower/ directory):
 ```
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
@@ -40,7 +40,7 @@ Then you must edit (according to changes you made above), compile and upload ske
 #define SPECIAL_MAX 3                   // maximum number of special codes
 ```
 
-You can change more things in autopower.ino, e.g.:
+You can change more things in `autopower.ino`, e.g.:
 ```
 #define ntpSyncTime SECS_PER_HOUR * 4   // how often sync time, in seconds
 #define localPort 8888                  // local port to listen for UDP packets
@@ -103,5 +103,5 @@ If outlet is in Time event driven mode, it's switched on time can be extended by
 
 ##Other features
 If you click on the clock, time will be renewed by time server.
-If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need trun off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
+If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need turn off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
 
