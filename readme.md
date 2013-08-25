@@ -110,6 +110,13 @@ If outlet is in Time event driven mode, it's on time can be extended byt plus si
 If you click on the clock, time will be renewed by time server.
 If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need turn off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
 
+##Commands
+To turn on or off device 10 just visit this webpage `http://ip_of_your_autopower/swt.html?cmd=9` (devices are numbered from 0, thus 9 is the 10th device).
+To turn on vacation mode for 10 days, just type in your browser `http://ip_of_your_autopower/swt.html?vac=10`. If you wanna turn off vacation mode use this: `http://ip_of_your_autopower/swt.html?vac=0`.
+
+##Security
+If you asking why we using user/admin name and password an no SSL, answer is simple. Arduino Uno/Ethernet is not capable of SSL. So why user names and password? Because many family members can switch outlets, but few of them are able to setup these (you know what we mean :)). Yes, yes we know about sniffing and all that hacking skills. But remember, RF signals @433MHz are easy "hackable" via standalone simple remote controller. 
+
 ##Examples
 * Setup outlet 1, channel 31, address A, time driven, no flag.
 * Setup outlet 2, channel 31, address B, normal, auto off.
