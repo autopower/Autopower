@@ -5,6 +5,7 @@
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
+#define SPECIAL_MAX 3                   // maximum number of special codes 
 
 // setup structure
 struct setup_t {
@@ -15,6 +16,7 @@ struct setup_t {
   byte dnsip[4];
   boolean dhcp;
   char timeZoneOffset;
+  unsigned long specCode[SPECIAL_MAX];
 } stp; 
 
 // devices structure
@@ -50,7 +52,7 @@ byte i;
   EEPROM_readAnything(STP_START, stp);
   EEPROM_readAnything(DEV_START, dev);
   EEPROM_readAnything(EVENTS_START, events);
-                   
+                     
   Serial.begin(9600);
   Serial.print("Size of the setup structure [bytes]: ");
   Serial.println(sizeof(stp));
@@ -58,6 +60,7 @@ byte i;
   Serial.println(sizeof(dev));
   Serial.print("Size of the events structure [bytes]: ");
   Serial.println(sizeof(events));
+  Serial << "Total: " << sizeof(stp) + sizeof(dev) + sizeof(events) << "\n";
 
   Serial << "setup_t stp = {\n";
   Serial << "\t{" << stp.mac[0] << ", " << stp.mac[1] << ", " << stp.mac[2] << ", " << stp.mac[3] << ", " << stp.mac[4] << ", " << stp.mac[5] << "},\n";
@@ -67,9 +70,15 @@ byte i;
   Serial << "\t{" << stp.dnsip[0] << "," << stp.dnsip[1] << ", " << stp.dnsip[2] << ", " << stp.dnsip[3] << "},\n";
   Serial << "\t" << (stp.dhcp?"true":"false") << ",\n";
   Serial << "\t" << byte(stp.timeZoneOffset) <<"\n";
+  Serial << "\t" << "{";
+  for (i = 0; i < SPECIAL_MAX; i++) {
+    Serial << stp.specCode[i];
+    if (i < SPECIAL_MAX - 1) Serial << ", ";
+  }
+  Serial << "}\n";
   Serial << "\t};\n";
   
-  Serial << "device_t dev = {\n\t{";
+  Serial << "devices_t dev = {\n\t{";
   for (i = 0; i < DEV_MAX; i++) {
     Serial << (dev.status[i]?"true":"false");
     if (i < DEV_MAX - 1) Serial << ", ";
