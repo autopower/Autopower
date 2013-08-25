@@ -34,7 +34,8 @@ Please edit following variables or constants:
 * if you want more that 20 events, edit `#define EVENTS_MAX 20`,
 * if you have more or less that 3 special (plain) RF codes edit `#define SPECIAL_MAX 3` and then edit `stp.specCode` array,
 * in `setup()`, if you don't want DHCP, set `stp.dhcp` to false and edit `ip, dns, gateway` and `netmask` according tou your enviroment.
-* 
+ 
+
 Please note that Arduino Uno have limited EEPROM and SRAM, so take a look at size of variables structures. Sketch `setupap.ino` writes values to EEPROM, so you MUST keep it under 1024bytes.
 
 Then you must edit (according to changes you made above), compile and upload sketch `autopower.ino` (from autopower/ directory):
