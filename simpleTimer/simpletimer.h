@@ -9,6 +9,8 @@
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 4                       // number of devices
 #define EVENTS_MAX 32                   // maximum number of events
+#define FIRST_DOW 3                     // use this in code, 3 = Monday is day0, 4 = Sunday is day0
+#define NO_DEV DEV_MAX + 1              // ID for no_device
 
 // mode listing
 #define MODE_NORMAL 0                   // bits ....00xx
@@ -20,8 +22,11 @@
 #define TYPE_TIMEDRIVEN 1               // bits ....xx01
 #define TYPE_COUNTED 2                  // bits ....xx10
 
-#define TYPE_MASK 3                     // bits xxxx0011
-#define MODE_SHIFT 2                    // shift 2
+#define CHANNEL_MASK 31               // bits xxx11111
+#define ADDRESS_SHIFT 5
+#define TYPE_MASK 3                   // bits xxxx0011
+#define MODE_SHIFT 2
+
 
 class simpleTimer
 {
@@ -30,6 +35,14 @@ class simpleTimer
     void processEvents();   
     byte getType(byte idx);
     byte getMode(byte idx);
+    byte getChannel(byte idx);
+    byte getAddress(byte idx);
+    void setVacationMode(int days);
+    void switchOnOff(byte idx, boolean onoff);
+    void setAutoOff(byte idx);
+    void switchAll(boolean onoff);
+    
+    time_t vacEnd;                               // 0 if system operates normally, otherwise end date/time of vacation
     
     struct setup_t {
       byte mac[6];
@@ -60,6 +73,12 @@ class simpleTimer
     } events;    
     
   private:
+    boolean isTime(byte eidx, byte didx, boolean onoroff);
+    
+    time_t nw;                                   // global variable for now()
+    int nowD;                                    // global variable for weekday(now())
+    int nowH;                                    // global variable for hour(now())
+    int nowM;                                    // global variable for minute(now())
 };  
 
 #endif
