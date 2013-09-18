@@ -16,10 +16,12 @@ You will need these parts:
 * jumper wires, check your local store with electronic gadgets or dx.com.
 
 ##Libraries you'll need to download
+In any case of doubt or problem, please download libraries from [here](https://github.com/autopower/Autopower/tree/master/libraries).
 * Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
 * [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML,
 * Arduino [time library](http://www.pjrc.com/teensy/td_libs_Time.html),
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
+
 
 ##How to setup hardware
 Connect `DATA` pin of receiver to pin `digital 2` of Arduino (this is interrupt 0). VCC and GND connect to `5V` and `GND` on Arduino.
