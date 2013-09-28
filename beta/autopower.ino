@@ -140,16 +140,13 @@ P(optionE) = "</option>";
 P(selectE) = "</select>";
 P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";                               // name
 P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";                                // switch type 0=classic, 1=timed, 2=counter
-P(postS) = "<form action=\"/";
-P(postE) = "\" method=\"post\">";
-P(postSettings) = "setuppost";
-P(adminSettings) = "adminpost";
+P(postS) = "<form action=\"/cfgpost\" method=\"post\">";
 P(submit) = "<input type=\"submit\" value=\"Save\"/></form>";
 P(checked) = "\" checked/>";
 P(selected) = " selected";
 P(refresh) = "<meta http-equiv=\"refresh\" content=\"0; URL=";
-const char menu_text[2][7] = {"Status", "Setup "};
-const char menu_link[2][4] = {"swt", "stp"};
+const char menu_text[2][7] = {"Status", "Config"};
+const char menu_link[2][4] = {"swt", "cfg"};
 P(dothtml) = ".html";
 P(endslash) = "\"";
 
@@ -653,8 +650,6 @@ int i, j;
     printPageStart(SETUP_POS);
     if (type != WebServer::HEAD)  {
       server.printP(postS);
-      server.printP(postSettings);
-      server.printP(postE);
       printTableStart(1);
      
       for (i = 0; i < DEV_MAX; i++) {
@@ -934,8 +929,8 @@ void setup() {
   webserver.addCommand("swt.html", &switchesCmd);
   webserver.setDefaultCommand(&switchesCmd);
   webserver.setFailureCommand(&failureCmd); 
-  webserver.addCommand("stp.html", &setupCmd);
-  webserver.addCommand("setuppost", &setupPost);
+  webserver.addCommand("cfg.html", &setupCmd);
+  webserver.addCommand("cfgpost", &setupPost);
 
   // reset dev.count 
   memset(dev.count, 0, sizeof(dev.count));
