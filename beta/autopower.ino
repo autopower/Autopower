@@ -1,13 +1,11 @@
-// #define TRACE_MEM
-// #define DEBUG_PRG
+#define USE_RECEIVER
 
-#include <Time.h>  
 #if defined(ARDUINO) && ARDUINO > 18
   #include <SPI.h>
 #endif
-
 #include <avr/pgmspace.h>
 
+#include <Time.h>  
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #define WEBDUINO_FAVICON_DATA ""
@@ -16,13 +14,16 @@
 #define WEBDUINO_SERVER_ERROR_MESSAGE ""
 #define WEBDUINO_AUTH_REALM "AutoPower"
 #include <WebServer.h>
-#include <RemoteReceiver.h>
+#ifdef USE_RECEIVER
+  #include <RemoteReceiver.h>
+#endif
+
 #include <RemoteTransmitter.h>
 #include <EEPROM.h>
 #include "apsaveany.h"
 
 // ----------------------- DEFINE VALUES -----------------------
-#define VERSION_STRING "1.00"           // version, not used anywhere
+#define VERSION_STRING "1.02"           // version, not used anywhere
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
@@ -122,8 +123,9 @@ P(tableStart0) = "<table border=\"0\" cellpadding=\"";
 P(tableStart1) = "2\" cellspacing=\"2";
 P(tableStart3) = "\">\n<tbody>\n";
 P(tableEnd) = "</tbody>\n</table>\n";
-P(tableHead1) = "<thead><tr><th>Name</th><th>Ch</th><th>Addr</th><th>Nm/Tm/Cn</th><th>Nm/Vc/AO/Sp</th></thead>";
-P(tableHead2) = "<thead><tr><th>Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th></tr></thead>";
+P(tableHead0) = "<thead><tr><th>";
+P(tableHead1) = "Name</th><th>Ch</th><th>Addr</th><th>Nm/Tm/Cn</th><th>Nm/Vc/AO/Sp</th></thead>";
+P(tableHead2) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th></thead>";
 P(trS) = "\n<tr>";
 P(trE) = "</tr>\n";
 P(tdS) = "\n\t<td>";
@@ -146,25 +148,10 @@ P(submit) = "<input type=\"submit\" value=\"Save\"/></form>";
 P(checked) = "\" checked/>";
 P(selected) = " selected";
 P(refresh) = "<meta http-equiv=\"refresh\" content=\"0; URL=";
-P(mtxt0) = "Status";
-P(mtxt1) = "Setup";
-P(menuswitch) = "swt.html";
+const char menu_text[2][7] = {"Status", "Setup "};
+const char menu_link[2][4] = {"swt", "stp"};
+P(dothtml) = ".html";
 P(endslash) = "\"";
-
-#ifdef DEBUG_PRG
-  unsigned long debug_val_1 = 0;// here add declaration of variables you need
-  unsigned long debug_val_2 = 0;
-#endif
-
-#ifdef TRACE_MEM
-int availableMemory() {
-int size = 2048; // Use 2048 with ATmega328
-byte *buf;
-  while ((buf = (byte *) malloc(--size)) == NULL) ;
-  free(buf);
-  return size;
-}
-#endif
 
 
 // -------------------------------------------------------
@@ -306,17 +293,26 @@ byte value;
   webserver.printP(tdE);    
 }
 
+void menuLink(byte idx, byte txt) {
+  webserver.print(menu_link[idx]);
+  webserver.printP(dothtml);
+  if (txt == 1) {
+    webserver.printP(close1);
+    webserver.print(menu_text[idx]);
+  }
+}
 
 
 // --------------------------------------------------------------
 // ----------------------- HTML functions -----------------------
 // --------------------------------------------------------------
 void printPageStart(byte type) {
-byte shortDayPos = 0;
+byte i = 0;
+byte sdp;
 
   P(htm01) = "<html>\n<head><title>Autopower</title></head>\n<body>\n";
-  P(menu1) = "<ul id=\"nav\">";
-  P(menu2) = "</ul>";
+  P(menu_start) = "<ul id=\"nav\">";
+  P(menu_end) = "</ul>";
   P(style0) = "<style>\nbody {font-weight:bold;font-family:sans-serif;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
   P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-bottom:1px solid #ccc;border-top:1px solid #ccc;}";
   P(navli) = "\n#nav li ";
@@ -339,19 +335,13 @@ byte shortDayPos = 0;
   P(vn0) = "vacation";
   P(vn1) = "normal";
   P(nh1) = "\n<h1>";
-  P(switchall_0) = "?cmd=all";
-  P(switchall_1) = "all ";
-  P(switchon) = "on";
-  P(switchoff) = "off";
-  P(days2) = "?vac=2\">";
-  P(clock1) = "?clk=1\">";
   P(nsw) = "\n#sw";
   P(h1e) = "</h1>";
-  P(menuitem0) = "<li><a href=\"swt.html\">Status</a></li><li><a href=\"stp.html\">Setup</a></li>";
-  P(menuitem9) = "https://www.fb.com/autopow\">About</a></li>";
+  P(menuitem9) = "https://www.fb.com/autopow\">About";
   P(failed) = "404 Not found!";
   P(unauth) = "401 Unauthorized!";
-  
+  P(cmd_vac) = "?vac=2\">";
+  P(cmd_clk) = "?clk=1\">";
   
   switch (type) {
     case UNAUTH: 
@@ -408,33 +398,36 @@ byte shortDayPos = 0;
   // <ul id=\"nav\">
   webserver.printP(swadd);
   webserver.printP(styleend);
-  webserver.printP(menu1);
+  webserver.printP(menu_start);
   
-  // <li><a href=\"swt.html\">Status</a></li><li><a href=\"setup.html\">Setup</a></li>
-  webserver.printP(menuitem0);
-  
-  webserver.printP(liahref);
-  webserver.printP(menuswitch);
-  webserver.printP(clock1);
-  shortDayPos = nowD << 1;
-  webserver.print(shortDay[shortDayPos]);
-  webserver.print(shortDay[shortDayPos + 1]);
-  webserver.print(", ");
-  webserver.print(formatTime(now()));
-  webserver.printP(ali);
-  
-  webserver.printP(liahref);
-  webserver.printP(menuswitch);
-  webserver.printP(days2);
-  if (vacEnd > 0) webserver.printP(vn0);
-    else webserver.printP(vn1);
-  webserver.printP(ali);
-  
-  // print about us
-  webserver.printP(liahref);
-  webserver.printP(menuitem9);
-  
-  webserver.printP(menu2);
+  for (i = 0; i < 5; i++) {
+    webserver.printP(liahref);
+    switch (i) {
+      case 2:
+        menuLink(0, 0);
+        webserver.printP(cmd_clk);
+        sdp = nowD << 1;
+        webserver.print(shortDay[sdp]);
+        webserver.print(shortDay[sdp + 1]);
+        webserver.print(", ");
+        webserver.print(formatTime(now()));
+        break;
+      case 3:
+        menuLink(0, 0);
+        webserver.printP(cmd_vac);
+        if (vacEnd > 0) webserver.printP(vn0);
+          else webserver.printP(vn1);
+        break;
+      case 4:
+        webserver.printP(menuitem9);
+        break;
+      default:
+        menuLink(i, 1);
+    }
+    webserver.printP(ali);
+  }
+ 
+  webserver.printP(menu_end);
   webserver.printP(nh1);
   switch (type) {
     case UNAUTH: 
@@ -444,19 +437,8 @@ byte shortDayPos = 0;
       webserver.printP(failed);
       break;
     default:
-      if (type == 0) webserver.printP(mtxt0);
-       else webserver.printP(mtxt1);
+      webserver.print(menu_text[type]);
   }
-
-#ifdef TRACE_MEM
-  webserver.print(availableMemory());
-#endif
-
-#ifdef DEBUG_PRG
-  webserver.print(debug_val_1);
-  webserver.print("/");
-  webserver.print(debug_val_2);
-#endif
 
   webserver.printP(h1e);
 }
@@ -467,22 +449,26 @@ P(a20) = "cmd=";
 P(a21) = "add=";
 P(a3) = "';\" style=\"cursor:pointer;\">";
 P(divsw) = "\n<div id=sw>\n";
-P(divswon) = "\t<div class=\"switch t";
-P(divswoff) = "\t<div class=\"switch f";
+P(divsw_) = "\t<div class=\"switch ";
 P(divsadd) = " add0\"";
 P(divsadd10) = "\t<div class=\"add1\"";
 P(divsadd11) = "+";
 P(divE) = "</div>\n";
 byte special;
+char cmd_;
 
     webserver.printP(divsw);
     for (byte n = 0; n < DEV_MAX; n++){
       special = 0;
       if (getType(n) == TYPE_TIMEDRIVEN) special = 1;
         else if (getMode(n) != MODE_NORMAL) special = 2;
+        
+        
+      webserver.printP(divsw_);
+      if (dev.status[n] == true) cmd_ = 't';
+        else cmd_ = 'f';
+      webserver.print(cmd_);      
 
-      if (dev.status[n] == true) webserver.printP(divswon);
-        else webserver.printP(divswoff);
       if (special > 0) webserver.printP(divsadd);
         else webserver.printP(endslash);
       if (switching) {
@@ -648,6 +634,7 @@ P(eventsHead) = "<h2>Events</h2>";
   webserver.printP(tableStart0);
   webserver.printP(tableStart1);
   webserver.printP(tableStart3);
+  webserver.printP(tableHead0);
   if (startType == 1) webserver.printP(tableHead1);  
     else webserver.printP(tableHead2);
 }
@@ -814,7 +801,7 @@ boolean repeat;
 
 void doRefresh() {
   webserver.printP(refresh);
-  webserver.printP(menuswitch);
+  menuLink(0, 0);
   webserver.printP(close1);
 }
 
@@ -832,7 +819,6 @@ void failureCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
 #define PULSE_LENGTH 350
 #define REPEAT_TRANSMIT 10
 
-#ifndef DEBUG_PRG
 void transmit(int nHighPulses, int nLowPulses) {
   digitalWrite(TRANSMITTER_PIN, HIGH);
   delayMicroseconds(PULSE_LENGTH * nHighPulses);
@@ -850,7 +836,6 @@ void send01(unsigned long code) {
     transmit(1, 31);
   }
 }
-#endif
 
 // check for automatically switched off outlet, if so set variable. Outlet cannot be time driven or counted
 void setAutoOff(byte idx) {
@@ -863,6 +848,7 @@ void setAutoOff(byte idx) {
   }
 }
 
+#ifdef USE_RECEIVER
 // receive command from original remote
 void receiveCommand(unsigned long receivedCode, unsigned int period) {
 byte tmpCh = 0;
@@ -888,18 +874,23 @@ boolean rcvCmd = false;
     }
   }
 }
+#endif
 
 // switch device on or off
 void switchOnOff(byte idx, boolean onoff) {
   dev.status[idx] = onoff;
+#ifdef USE_RECEIVER
   // disable receiving, not to interfere with actual command
   RemoteReceiver::disable();
-  #ifndef DEBUG_PRG
+#endif
+  
   if (getMode(idx) == MODE_SPECIAL) send01(stp.specCode[getChannel(idx)]);
     else actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
-  #endif
+
+#ifdef USE_RECEIVER
   // enable receiving
   RemoteReceiver::enable();
+#endif
 }
 
 // is this that time we can switch on or off?
@@ -940,22 +931,18 @@ void setup() {
  
   // init webserver
   webserver.begin();
-  #ifndef DEBUG_PRG
   webserver.addCommand("swt.html", &switchesCmd);
   webserver.setDefaultCommand(&switchesCmd);
   webserver.setFailureCommand(&failureCmd); 
-  #endif
   webserver.addCommand("stp.html", &setupCmd);
   webserver.addCommand("setuppost", &setupPost);
-  #ifdef DEBUG_PRG
-  Serial.begin(9600);
-  Serial.println("Go!");
-  #endif
 
   // reset dev.count 
   memset(dev.count, 0, sizeof(dev.count));
+#ifdef USE_RECEIVER
   // start receiver
   RemoteReceiver::init(0, REMOTE_SIGNAL_COUNT, receiveCommand); 
+#endif
 }
 
 // ----------------------------------------------------
