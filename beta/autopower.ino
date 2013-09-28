@@ -123,9 +123,6 @@ P(tableStart0) = "<table border=\"0\" cellpadding=\"";
 P(tableStart1) = "2\" cellspacing=\"2";
 P(tableStart3) = "\">\n<tbody>\n";
 P(tableEnd) = "</tbody>\n</table>\n";
-P(tableHead0) = "<thead><tr><th>";
-P(tableHead1) = "Name</th><th>Ch</th><th>Addr</th><th>Nm/Tm/Cn</th><th>Nm/Vc/AO/Sp</th></thead>";
-P(tableHead2) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th></thead>";
 P(trS) = "\n<tr>";
 P(trE) = "</tr>\n";
 P(tdS) = "\n\t<td>";
@@ -138,8 +135,8 @@ P(close1)  = "\">";
 P(input3) =  "\"/>";
 P(optionE) = "</option>";
 P(selectE) = "</select>";
-P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";                               // name
-P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";                                // switch type 0=classic, 1=timed, 2=counter
+P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";
+P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";
 P(postS) = "<form action=\"/cfgpost\" method=\"post\">";
 P(submit) = "<input type=\"submit\" value=\"Save\"/></form>";
 P(checked) = "\" checked/>";
@@ -304,14 +301,14 @@ void menuLink(byte idx, byte txt) {
 // ----------------------- HTML functions -----------------------
 // --------------------------------------------------------------
 void printPageStart(byte type) {
-byte i = 0;
+byte i;
 byte sdp;
 
   P(htm01) = "<html>\n<head><title>Autopower</title></head>\n<body>\n";
   P(menu_start) = "<ul id=\"nav\">";
   P(menu_end) = "</ul>";
-  P(style0) = "<style>\nbody {font-weight:bold;font-family:sans-serif;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
-  P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-bottom:1px solid #ccc;border-top:1px solid #ccc;}";
+  P(style0) = "<style>\nbody {font:bold 1em Arial;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
+  P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-top:1px solid #ccc;}";
   P(navli) = "\n#nav li ";
   P(style2) = "\n#nav li {float:left;}";
   P(style3) = "\n#nav li a {display:block;padding:8px 15px;border-right:1px solid #ccc;color:#069;text-decoration:none;}";
@@ -334,7 +331,7 @@ byte sdp;
   P(nh1) = "\n<h1>";
   P(nsw) = "\n#sw";
   P(h1e) = "</h1>";
-  P(menuitem9) = "https://www.fb.com/autopow\">About";
+  P(menuitem9) = "fb.me/autopow\">About";
   P(failed) = "404 Not found!";
   P(unauth) = "401 Unauthorized!";
   P(cmd_vac) = "?vac=2\">";
@@ -566,7 +563,7 @@ char *nameStr;
 }
 
 void dropDown(char name, byte idx) {
-byte values, test;
+byte values, test, k;
 P(noDevice) = "n/a (0)";
 
   webserver.printP(tdS);
@@ -611,9 +608,9 @@ P(noDevice) = "n/a (0)";
         if (j == DEV_MAX) webserver.printP(noDevice);
           else {
             webserver.print(dev.name[j]);
-            webserver.print(" (");
-            webserver.print(j+1);
-            webserver.print(")"); 
+            webserver.print("=");
+            k = j + 1;
+            webserver.print(k);
           }
         break;  
     }
@@ -624,16 +621,22 @@ P(noDevice) = "n/a (0)";
 }
 
 void printTableStart(byte startType) {
+const char tHead[2][17] = {"<h2>Devices</h2>", "<h2>Events</h2>"};
+P(tHeader0) = "Name</th><th>Ch</th><th>Adr</th><th>N/T/C</th><th>N/V/A/S</th>";
+P(tHeader1) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th>";
+P(tableHeads) = "<thead><tr><th>";
+P(tableHeade) = "</thead>";
 P(devHead) = "<h2>Devices</h2>";
 P(eventsHead) = "<h2>Events</h2>";
-  if (startType == 1) webserver.printP(devHead);
-    else webserver.printP(eventsHead);
+
+  webserver.print(tHead[startType]);
   webserver.printP(tableStart0);
   webserver.printP(tableStart1);
   webserver.printP(tableStart3);
-  webserver.printP(tableHead0);
-  if (startType == 1) webserver.printP(tableHead1);  
-    else webserver.printP(tableHead2);
+  webserver.printP(tableHeads);
+  if (startType == 0) webserver.printP(tHeader0); 
+    else webserver.printP(tHeader1);
+  webserver.printP(tableHeade);
 }
 
 void setupCmd(WebServer &server, WebServer::ConnectionType type, char *, bool) {
@@ -650,7 +653,7 @@ int i, j;
     printPageStart(SETUP_POS);
     if (type != WebServer::HEAD)  {
       server.printP(postS);
-      printTableStart(1);
+      printTableStart(0);
      
       for (i = 0; i < DEV_MAX; i++) {
         // row start
@@ -671,7 +674,7 @@ int i, j;
       }
       server.printP(tableEnd);
       
-      printTableStart(2);
+      printTableStart(1);
       
       for (i = 0; i < EVENTS_MAX; i++) {
         // row start
