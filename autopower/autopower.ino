@@ -1,11 +1,11 @@
-// #define TRACE_MEM
-// #define DEBUG_PRG
+#define USE_RECEIVER
 
-#include <Time.h>  
 #if defined(ARDUINO) && ARDUINO > 18
   #include <SPI.h>
 #endif
+#include <avr/pgmspace.h>
 
+#include <Time.h>  
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #define WEBDUINO_FAVICON_DATA ""
@@ -14,13 +14,16 @@
 #define WEBDUINO_SERVER_ERROR_MESSAGE ""
 #define WEBDUINO_AUTH_REALM "AutoPower"
 #include <WebServer.h>
-#include <RemoteReceiver.h>
+#ifdef USE_RECEIVER
+  #include <RemoteReceiver.h>
+#endif
+
 #include <RemoteTransmitter.h>
 #include <EEPROM.h>
 #include "apsaveany.h"
 
 // ----------------------- DEFINE VALUES -----------------------
-#define VERSION_STRING "1.00"           // version, not used anywhere
+#define VERSION_STRING "1.02"           // version, not used anywhere
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
@@ -118,11 +121,8 @@ P(menuFooter) = "</tr></tbody></table>\n";
 P(htmlEnd) = "</body></html>";
 P(tableStart0) = "<table border=\"0\" cellpadding=\"";
 P(tableStart1) = "2\" cellspacing=\"2";
-P(tableStart2) = "20\" cellspacing=\"4";
 P(tableStart3) = "\">\n<tbody>\n";
 P(tableEnd) = "</tbody>\n</table>\n";
-P(tableHead1) = "<thead><tr><th>Name</th><th>Chn</th><th>Addr</th><th>Nm/Tm/Cn</th><th>Nm/Vc/AO/Sp</th></thead>";
-P(tableHead2) = "<thead><tr><th>Dev ID</th><th>Time on</th><th>Days on</th><th>Time off</th><th>Days off</th></tr></thead>";
 P(trS) = "\n<tr>";
 P(trE) = "</tr>\n";
 P(tdS) = "\n\t<td>";
@@ -135,35 +135,17 @@ P(close1)  = "\">";
 P(input3) =  "\"/>";
 P(optionE) = "</option>";
 P(selectE) = "</select>";
-P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";                               // name
-P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";                                // switch type 0=classic, 1=timed, 2=counter
-P(postS) = "<form action=\"/";
-P(postE) = "\" method=\"post\">";
-P(postSettings) = "setuppost";
-P(adminSettings) = "adminpost";
+P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";
+P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";
+P(postS) = "<form action=\"/cfgpost\" method=\"post\">";
 P(submit) = "<input type=\"submit\" value=\"Save\"/></form>";
 P(checked) = "\" checked/>";
 P(selected) = " selected";
 P(refresh) = "<meta http-equiv=\"refresh\" content=\"0; URL=";
-P(mtxt0) = "Status";
-P(mtxt1) = "Setup";
-P(menuswitch) = "swt.html";
+const char menu_text[2][7] = {"Status", "Config"};
+const char menu_link[2][4] = {"swt", "cfg"};
+P(dothtml) = ".html";
 P(endslash) = "\"";
-
-#ifdef DEBUG_PRG
-  unsigned long debug_val_1 = 0;// here add declaration of variables you need
-  unsigned long debug_val_2 = 0;
-#endif
-
-#ifdef TRACE_MEM
-int availableMemory() {
-int size = 2048; // Use 2048 with ATmega328
-byte *buf;
-  while ((buf = (byte *) malloc(--size)) == NULL) ;
-  free(buf);
-  return size;
-}
-#endif
 
 
 // -------------------------------------------------------
@@ -190,13 +172,6 @@ byte getMode(byte idx) {
   return (dev.type[idx] >> MODE_SHIFT);
 }
 
-void getTime() {
-  nw = now();
-  // return DOW in order, accoring to FIRST_DOW (Monday=0..Sunday=6)
-  nowD = ((nw / 86400L) + FIRST_DOW) % 7;
-  nowH = hour(nw);
-  nowM = minute(nw);
-}
 
 time_t convertTime() {
 time_t temp = 0;
@@ -312,19 +287,28 @@ byte value;
   webserver.printP(tdE);    
 }
 
+void menuLink(byte idx, byte txt) {
+  webserver.print(menu_link[idx]);
+  webserver.printP(dothtml);
+  if (txt == 1) {
+    webserver.printP(close1);
+    webserver.print(menu_text[idx]);
+  }
+}
 
 
 // --------------------------------------------------------------
 // ----------------------- HTML functions -----------------------
 // --------------------------------------------------------------
 void printPageStart(byte type) {
-byte shortDayPos = 0;
+byte i;
+byte sdp;
 
   P(htm01) = "<html>\n<head><title>Autopower</title></head>\n<body>\n";
-  P(menu1) = "<ul id=\"nav\">";
-  P(menu2) = "</ul>";
-  P(style0) = "<style>\nbody {font-weight:bold;font-family:sans-serif;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
-  P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-bottom:1px solid #ccc;border-top:1px solid #ccc;}";
+  P(menu_start) = "<ul id=\"nav\">";
+  P(menu_end) = "</ul>";
+  P(style0) = "<style>\nbody {font:bold 1em Arial;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
+  P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-top:1px solid #ccc;}";
   P(navli) = "\n#nav li ";
   P(style2) = "\n#nav li {float:left;}";
   P(style3) = "\n#nav li a {display:block;padding:8px 15px;border-right:1px solid #ccc;color:#069;text-decoration:none;}";
@@ -339,27 +323,19 @@ byte shortDayPos = 0;
   P(styleend) = "\n</style>\n";
   P(swdiv) = "\n#sw div {float:left;margin:0.5em;text-decoration:none;color:#066;display:block}";
   P(swdivswitch) = "\n#sw div.switch {min-width:9em;padding:1em 2em 1em 1em;border-right:1px solid #ccc;}";
-  P(swadd) = "\n#sw div.add0 {border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.add1 {border-right:1px solid #ccc;min-width:1em;padding:1em 1em 1em 1em;}";
+  P(swadd) = "\n#sw div.add0 {border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.add1 {border-right:1px solid #ccc;min-width:1em;padding:1em;}"; // was 1em 1em 1em 1em
   P(liahref) = "<li><a href=\"";
   P(ali) = "</a></li>";
   P(vn0) = "vacation";
   P(vn1) = "normal";
   P(nh1) = "\n<h1>";
-  P(switchall_0) = "?cmd=all";
-  P(switchall_1) = "all ";
-  P(switchon) = "on";
-  P(switchoff) = "off";
-  P(days2) = "?vac=2\">";
-  P(clock1) = "?clk=1\">";
   P(nsw) = "\n#sw";
   P(h1e) = "</h1>";
-  P(menuitem0) = "<li><a href=\"swt.html\">Status</a></li><li><a href=\"stp.html\">Setup</a></li>";
-  P(menuitem9) = "<li><a href=\"https://www.facebook.com/autopow\">About</a></li>";
-  P(li_s) = "<li>";
-  P(li_e) = "</li>";
+  P(menuitem9) = "http://fb.me/autopow\">About";
   P(failed) = "404 Not found!";
   P(unauth) = "401 Unauthorized!";
-  
+  P(cmd_vac) = "?vac=2\">";
+  P(cmd_clk) = "?clk=1\">";
   
   switch (type) {
     case UNAUTH: 
@@ -416,32 +392,36 @@ byte shortDayPos = 0;
   // <ul id=\"nav\">
   webserver.printP(swadd);
   webserver.printP(styleend);
-  webserver.printP(menu1);
+  webserver.printP(menu_start);
   
-  // <li><a href=\"swt.html\">Status</a></li><li><a href=\"setup.html\">Setup</a></li>
-  webserver.printP(menuitem0);
-  
-  webserver.printP(liahref);
-  webserver.printP(menuswitch);
-  webserver.printP(clock1);
-  shortDayPos = nowD << 1;
-  webserver.print(shortDay[shortDayPos]);
-  webserver.print(shortDay[shortDayPos + 1]);
-  webserver.print(", ");
-  webserver.print(formatTime(now()));
-  webserver.printP(ali);
-  
-  webserver.printP(liahref);
-  webserver.printP(menuswitch);
-  webserver.printP(days2);
-  if (vacEnd > 0) webserver.printP(vn0);
-    else webserver.printP(vn1);
-  webserver.printP(ali);
-  
-  // print about us
-  webserver.printP(menuitem9);
-  
-  webserver.printP(menu2);
+  for (i = 0; i < 5; i++) {
+    webserver.printP(liahref);
+    switch (i) {
+      case 2:
+        menuLink(0, 0);
+        webserver.printP(cmd_clk);
+        sdp = nowD << 1;
+        webserver.print(shortDay[sdp]);
+        webserver.print(shortDay[sdp + 1]);
+        webserver.print(", ");
+        webserver.print(formatTime(now()));
+        break;
+      case 3:
+        menuLink(0, 0);
+        webserver.printP(cmd_vac);
+        if (vacEnd > 0) webserver.printP(vn0);
+          else webserver.printP(vn1);
+        break;
+      case 4:
+        webserver.printP(menuitem9);
+        break;
+      default:
+        menuLink(i, 1);
+    }
+    webserver.printP(ali);
+  }
+ 
+  webserver.printP(menu_end);
   webserver.printP(nh1);
   switch (type) {
     case UNAUTH: 
@@ -451,19 +431,8 @@ byte shortDayPos = 0;
       webserver.printP(failed);
       break;
     default:
-      if (type == 0) webserver.printP(mtxt0);
-       else webserver.printP(mtxt1);
+      webserver.print(menu_text[type]);
   }
-
-#ifdef TRACE_MEM
-  webserver.print(availableMemory());
-#endif
-
-#ifdef DEBUG_PRG
-  webserver.print(debug_val_1);
-  webserver.print("/");
-  webserver.print(debug_val_2);
-#endif
 
   webserver.printP(h1e);
 }
@@ -474,22 +443,25 @@ P(a20) = "cmd=";
 P(a21) = "add=";
 P(a3) = "';\" style=\"cursor:pointer;\">";
 P(divsw) = "\n<div id=sw>\n";
-P(divswon) = "\t<div class=\"switch t";
-P(divswoff) = "\t<div class=\"switch f";
+P(divsw_) = "\t<div class=\"switch ";
 P(divsadd) = " add0\"";
 P(divsadd10) = "\t<div class=\"add1\"";
-P(divsadd11) = "+";
 P(divE) = "</div>\n";
 byte special;
+char cmd_;
 
     webserver.printP(divsw);
     for (byte n = 0; n < DEV_MAX; n++){
       special = 0;
       if (getType(n) == TYPE_TIMEDRIVEN) special = 1;
         else if (getMode(n) != MODE_NORMAL) special = 2;
+        
+        
+      webserver.printP(divsw_);
+      if (dev.status[n] == true) cmd_ = 't';
+        else cmd_ = 'f';
+      webserver.print(cmd_);      
 
-      if (dev.status[n] == true) webserver.printP(divswon);
-        else webserver.printP(divswoff);
       if (special > 0) webserver.printP(divsadd);
         else webserver.printP(endslash);
       if (switching) {
@@ -511,10 +483,12 @@ byte special;
           webserver.print(n);
           webserver.printP(a3);
           if (dev.count[n] > 0) webserver.print(dev.count[n]);
-            else webserver.printP(divsadd11);
+            else webserver.print('+');
         } else {
           webserver.print('>');
-          webserver.print(fChar[getMode(n)]);
+          if (dev.count[n] > 0) { // TBI TBI TBI
+            webserver.print((int)(dev.count[n] - now()) / 60);
+          } else webserver.print(fChar[getMode(n)]);
         }
       
       } 
@@ -588,7 +562,7 @@ char *nameStr;
 }
 
 void dropDown(char name, byte idx) {
-byte values, test;
+byte values, test, k;
 P(noDevice) = "n/a (0)";
 
   webserver.printP(tdS);
@@ -633,9 +607,9 @@ P(noDevice) = "n/a (0)";
         if (j == DEV_MAX) webserver.printP(noDevice);
           else {
             webserver.print(dev.name[j]);
-            webserver.print(" (");
-            webserver.print(j+1);
-            webserver.print(")"); 
+            webserver.print("=");
+            k = j + 1;
+            webserver.print(k);
           }
         break;  
     }
@@ -646,21 +620,28 @@ P(noDevice) = "n/a (0)";
 }
 
 void printTableStart(byte startType) {
+const char tHead[2][17] = {"<h2>Devices</h2>", "<h2>Events</h2>"};
+P(tHeader0) = "Name</th><th>Ch</th><th>Adr</th><th>N/T/C</th><th>N/V/A/S</th>";
+P(tHeader1) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th>";
+P(tableHeads) = "<thead><tr><th>";
+P(tableHeade) = "</thead>";
 P(devHead) = "<h2>Devices</h2>";
 P(eventsHead) = "<h2>Events</h2>";
-  if (startType == 1) webserver.printP(devHead);
-    else webserver.printP(eventsHead);
+
+  webserver.print(tHead[startType]);
   webserver.printP(tableStart0);
   webserver.printP(tableStart1);
   webserver.printP(tableStart3);
-  if (startType == 1) webserver.printP(tableHead1);  
-    else webserver.printP(tableHead2);
+  webserver.printP(tableHeads);
+  if (startType == 0) webserver.printP(tHeader0); 
+    else webserver.printP(tHeader1);
+  webserver.printP(tableHeade);
 }
 
 void setupCmd(WebServer &server, WebServer::ConnectionType type, char *, bool) {
 P(txt1) = "Vacation [days]:";
-P(tzo) = "Time zone [hour]:";
-P(spec) = "Spec code";
+P(tzo) = "Timezone [h]:";
+P(spec) = "Specials:";
 P(otherHead) = "<h2>Other</h2>";
 P(br) = "<br/>";
 char tmpstr[10];
@@ -671,9 +652,7 @@ int i, j;
     printPageStart(SETUP_POS);
     if (type != WebServer::HEAD)  {
       server.printP(postS);
-      server.printP(postSettings);
-      server.printP(postE);
-      printTableStart(1);
+      printTableStart(0);
      
       for (i = 0; i < DEV_MAX; i++) {
         // row start
@@ -694,7 +673,7 @@ int i, j;
       }
       server.printP(tableEnd);
       
-      printTableStart(2);
+      printTableStart(1);
       
       for (i = 0; i < EVENTS_MAX; i++) {
         // row start
@@ -819,7 +798,7 @@ boolean repeat;
 
 void doRefresh() {
   webserver.printP(refresh);
-  webserver.printP(menuswitch);
+  menuLink(0, 0);
   webserver.printP(close1);
 }
 
@@ -837,7 +816,6 @@ void failureCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
 #define PULSE_LENGTH 350
 #define REPEAT_TRANSMIT 10
 
-#ifndef DEBUG_PRG
 void transmit(int nHighPulses, int nLowPulses) {
   digitalWrite(TRANSMITTER_PIN, HIGH);
   delayMicroseconds(PULSE_LENGTH * nHighPulses);
@@ -855,7 +833,6 @@ void send01(unsigned long code) {
     transmit(1, 31);
   }
 }
-#endif
 
 // check for automatically switched off outlet, if so set variable. Outlet cannot be time driven or counted
 void setAutoOff(byte idx) {
@@ -868,6 +845,7 @@ void setAutoOff(byte idx) {
   }
 }
 
+#ifdef USE_RECEIVER
 // receive command from original remote
 void receiveCommand(unsigned long receivedCode, unsigned int period) {
 byte tmpCh = 0;
@@ -893,25 +871,25 @@ boolean rcvCmd = false;
     }
   }
 }
+#endif
 
 // switch device on or off
 void switchOnOff(byte idx, boolean onoff) {
   dev.status[idx] = onoff;
+  dev.count[idx] = 0;
+#ifdef USE_RECEIVER
   // disable receiving, not to interfere with actual command
   RemoteReceiver::disable();
-  #ifndef DEBUG_PRG
+#endif
+  
   if (getMode(idx) == MODE_SPECIAL) send01(stp.specCode[getChannel(idx)]);
     else actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
-  #endif
+
+#ifdef USE_RECEIVER
   // enable receiving
   RemoteReceiver::enable();
-}
-
-#ifdef SWITCH_ALL
-void switchAll(boolean onoff) {
-  for (byte i = 0; i < DEV_MAX; i++) switchOnOff(i, onoff);
-}
 #endif
+}
 
 // is this that time we can switch on or off?
 boolean isTime(byte eidx, byte didx, boolean onoroff) {
@@ -928,45 +906,6 @@ boolean isTime(byte eidx, byte didx, boolean onoroff) {
     } else if (bitRead(events.d_on[eidx], nowD) == 1 && hour(events.t_on[eidx]) == nowH && minute(events.t_on[eidx]) == nowM && dev.status[didx] == false) return true;
   return false;
 }
-
-void processEvents() {
-int cM, nM, oM;
-byte mode, dIdx;
-
-  getTime();
-  if (nw >= vacEnd) vacEnd = 0;
-  for (int i = 0; i < EVENTS_MAX; i++) {
-    dIdx = events.device[i]; 
-    if (dIdx == NO_DEV) continue;                  // if device index in events are bigger then device list size, then this event isn't processible
-    mode = getMode(dIdx);
-
-    if (vacEnd == 0 || mode == MODE_VACATION) {
-      switch (getType(dIdx)) {
-        case TYPE_NORMAL:
-          if (mode == MODE_AUTOOFF && nw >= dev.count[dIdx] && dev.status[dIdx] == true) switchOnOff(dIdx, false);
-          break;
-        case TYPE_TIMEDRIVEN:
-          if (isTime(i, dIdx, true) == true) switchOnOff(dIdx, true);
-          if (isTime(i, dIdx, false) == true) switchOnOff(dIdx, false);
-          break;
-        case TYPE_COUNTED:
-          nM = nowH * 60 + nowM;
-          if (dev.status[i]) {
-            cM = hour(dev.count[dIdx]) * 60 + minute(dev.count[dIdx]);
-            oM = hour(events.t_off[i]) * 60 +  minute(events.t_off[i]);
-            if (nM > cM + oM) switchOnOff(dIdx, false);
-          } else {
-              cM = hour(events.t_on[i]) * 60 + minute(events.t_on[i]);
-              if (nM % cM == 0) {
-                 switchOnOff(dIdx, true);
-                 dev.count[dIdx] = nw;
-              }
-          } // end else
-      } // end switch
-    } // end if
-  } // end for
-}
-
 
 // -----------------------------------------------------
 // ----------------------- SETUP -----------------------
@@ -990,20 +929,18 @@ void setup() {
  
   // init webserver
   webserver.begin();
-  #ifndef DEBUG_PRG
   webserver.addCommand("swt.html", &switchesCmd);
   webserver.setDefaultCommand(&switchesCmd);
   webserver.setFailureCommand(&failureCmd); 
-  #endif
-  webserver.addCommand("stp.html", &setupCmd);
-  webserver.addCommand("setuppost", &setupPost);
-  #ifdef DEBUG_PRG
-  Serial.begin(9600);
-  Serial.println("Go!");
-  #endif
+  webserver.addCommand("cfg.html", &setupCmd);
+  webserver.addCommand("cfgpost", &setupPost);
 
+  // reset dev.count 
+  memset(dev.count, 0, sizeof(dev.count));
+#ifdef USE_RECEIVER
   // start receiver
   RemoteReceiver::init(0, REMOTE_SIGNAL_COUNT, receiveCommand); 
+#endif
 }
 
 // ----------------------------------------------------
@@ -1012,8 +949,48 @@ void setup() {
 void loop() {
 char buff[CON_BUFFER];
 int len = CON_BUFFER;
+int cM, nM, oM;
+byte mode, dIdx;
 
-  processEvents();
+
+  nw = now();
+  // return DOW in order, accoring to FIRST_DOW (Monday=0..Sunday=6)
+  nowD = ((nw / 86400L) + FIRST_DOW) % 7;
+  nowH = hour(nw);
+  nowM = minute(nw);
+
+  if (nw >= vacEnd) vacEnd = 0;
+  for (int i = 0; i < EVENTS_MAX; i++) {
+    dIdx = events.device[i]; 
+    if (dIdx == NO_DEV) continue;                  // if device index in events are bigger then device list size, then this event isn't processible
+    mode = getMode(dIdx);
+
+    if (vacEnd == 0 || mode == MODE_VACATION) {
+      switch (getType(dIdx)) {
+        case TYPE_NORMAL:
+          if (mode == MODE_AUTOOFF && nw >= dev.count[dIdx] && dev.status[dIdx] == true) switchOnOff(dIdx, false);
+          break;
+        case TYPE_TIMEDRIVEN:
+          if (isTime(i, dIdx, true) == true) switchOnOff(dIdx, true);
+          if (isTime(i, dIdx, false) == true) switchOnOff(dIdx, false);
+          break;
+        case TYPE_COUNTED:
+          nM = nowH * 60 + nowM;
+          if (dev.status[i]) {
+            cM = hour(dev.count[dIdx]) * 60 + minute(dev.count[dIdx]);
+            oM = hour(events.t_off[i]) * 60 + minute(events.t_off[i]);
+            if (nM > cM + oM) switchOnOff(dIdx, false);
+          } else {
+              cM = hour(events.t_on[i]) * 60 + minute(events.t_on[i]);
+              if (nM % cM == 0) {
+                 switchOnOff(dIdx, true);
+                 dev.count[dIdx] = nw;
+              }
+          } // end else
+      } // end switch
+    } // end if
+  } // end for
+  
   webserver.processConnection(buff, &len);
 }
 
