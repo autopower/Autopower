@@ -23,7 +23,7 @@
 #include "apsaveany.h"
 
 // ----------------------- DEFINE VALUES -----------------------
-#define VERSION_STRING "1.02"           // version, not used anywhere
+#define VERSION_STRING "1.03"           // version, not used anywhere
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
@@ -123,6 +123,9 @@ P(tableStart0) = "<table border=\"0\" cellpadding=\"";
 P(tableStart1) = "2\" cellspacing=\"2";
 P(tableStart3) = "\">\n<tbody>\n";
 P(tableEnd) = "</tbody>\n</table>\n";
+P(tableHead0) = "<thead><tr><th>";
+P(tableHead1) = "Name</th><th>Ch</th><th>Addr</th><th>Nm/Tm/Cn</th><th>Nm/Vc/AO/Sp</th></thead>";
+P(tableHead2) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th></thead>";
 P(trS) = "\n<tr>";
 P(trE) = "</tr>\n";
 P(tdS) = "\n\t<td>";
@@ -135,15 +138,18 @@ P(close1)  = "\">";
 P(input3) =  "\"/>";
 P(optionE) = "</option>";
 P(selectE) = "</select>";
-P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";
-P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";
-P(postS) = "<form action=\"/cfgpost\" method=\"post\">";
+P(inputChk) = "\n\t\t<input type=\"checkbox\" name=\"";                               // name
+P(inputRadio) = "\n\t\t<input type=\"radio\" name=\"";                                // switch type 0=classic, 1=timed, 2=counter
+P(postS) = "<form action=\"/";
+P(postE) = "\" method=\"post\">";
+P(postSettings) = "setuppost";
+P(adminSettings) = "adminpost";
 P(submit) = "<input type=\"submit\" value=\"Save\"/></form>";
 P(checked) = "\" checked/>";
 P(selected) = " selected";
 P(refresh) = "<meta http-equiv=\"refresh\" content=\"0; URL=";
-const char menu_text[2][7] = {"Status", "Config"};
-const char menu_link[2][4] = {"swt", "cfg"};
+const char menu_text[2][7] = {"Status", "Setup "};
+const char menu_link[2][4] = {"swt", "stp"};
 P(dothtml) = ".html";
 P(endslash) = "\"";
 
@@ -301,29 +307,29 @@ void menuLink(byte idx, byte txt) {
 // ----------------------- HTML functions -----------------------
 // --------------------------------------------------------------
 void printPageStart(byte type) {
-byte i;
+byte i = 0;
 byte sdp;
 
   P(htm01) = "<html>\n<head><title>Autopower</title></head>\n<body>\n";
   P(menu_start) = "<ul id=\"nav\">";
   P(menu_end) = "</ul>";
-  P(style0) = "<style>\nbody {font:bold 1em Arial;text-decoration:none;list-style:none;}\nh1 {background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2 {background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
-  P(style1) = " {width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-top:1px solid #ccc;}";
+  P(style0) = "<style>\nbody{font-weight:bold;font-family:sans-serif;text-decoration:none;list-style:none;}\nh1{background:#069;padding:2em 1em 1em 1em;color:white;border-radius:10px 10px;}\nh2{background:#0AA;padding:0.5em;color:white;border-radius:5px;}";
+  P(style1) = "{width:100%;float:left;margin:0;padding:0;background-color:#f2f2f2;border-bottom:1px solid #ccc;border-top:1px solid #ccc;}";
   P(navli) = "\n#nav li ";
-  P(style2) = "\n#nav li {float:left;}";
-  P(style3) = "\n#nav li a {display:block;padding:8px 15px;border-right:1px solid #ccc;color:#069;text-decoration:none;}";
-  P(style4) = "\n#nav li a:hover {color:#c00;background-color:#fff;}";
-  P(style5) = " {display:block;min-width:8em;padding:1em 2em 1em 2em;margin:0.5em;text-decoration:none;color:#066;border-right:1px solid #ccc;border-left: 1em solid #";
+  P(style2) = "\n#nav li{float:left;}";
+  P(style3) = "\n#nav li a{display:block;padding:8px 15px;border-right:1px solid #ccc;color:#069;text-decoration:none;}";
+  P(style4) = "\n#nav li a:hover{color:#c00;background-color:#fff;}";
+  P(style5) = "{display:block;min-width:8em;padding:1em 2em 1em 2em;margin:0.5em;text-decoration:none;color:#066;border-right:1px solid #ccc;border-left:1em solid #";
   P(nav) = "\n#nav";
-  P(swdivtf) = " {border-left: 1em solid ";
+  P(swdivtf) = "{border-left:1em solid ";
   P(swdivt1) = "#0f0;}";
   P(swdivf1) = "#f00;}";
   P(swdivt0) = "\n#sw div.t";
   P(swdivf0) = "\n#sw div.f";
   P(styleend) = "\n</style>\n";
-  P(swdiv) = "\n#sw div {float:left;margin:0.5em;text-decoration:none;color:#066;display:block}";
-  P(swdivswitch) = "\n#sw div.switch {min-width:9em;padding:1em 2em 1em 1em;border-right:1px solid #ccc;}";
-  P(swadd) = "\n#sw div.add0 {border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.add1 {border-right:1px solid #ccc;min-width:1em;padding:1em;}"; // was 1em 1em 1em 1em
+  P(swdiv) = "\n#sw div{float:left;margin:0.5em;text-decoration:none;color:#066;display:block}";
+  P(swdivswitch) = "\n#sw div.switch{min-width:9em;padding:1em 2em 1em 1em;border-right:1px solid #ccc;}";
+  P(swadd) = "\n#sw div.add0{border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.add1{border-right:1px solid #ccc;min-width:1em;padding:1em;}"; // was 1em 1em 1em 1em
   P(liahref) = "<li><a href=\"";
   P(ali) = "</a></li>";
   P(vn0) = "vacation";
@@ -331,7 +337,7 @@ byte sdp;
   P(nh1) = "\n<h1>";
   P(nsw) = "\n#sw";
   P(h1e) = "</h1>";
-  P(menuitem9) = "fb.me/autopow\">About";
+  P(menuitem9) = "https://www.fb.com/autopow\">About";
   P(failed) = "404 Not found!";
   P(unauth) = "401 Unauthorized!";
   P(cmd_vac) = "?vac=2\">";
@@ -563,7 +569,7 @@ char *nameStr;
 }
 
 void dropDown(char name, byte idx) {
-byte values, test, k;
+byte values, test;
 P(noDevice) = "n/a (0)";
 
   webserver.printP(tdS);
@@ -608,9 +614,9 @@ P(noDevice) = "n/a (0)";
         if (j == DEV_MAX) webserver.printP(noDevice);
           else {
             webserver.print(dev.name[j]);
-            webserver.print("=");
-            k = j + 1;
-            webserver.print(k);
+            webserver.print(" (");
+            webserver.print(j+1);
+            webserver.print(")"); 
           }
         break;  
     }
@@ -621,22 +627,16 @@ P(noDevice) = "n/a (0)";
 }
 
 void printTableStart(byte startType) {
-const char tHead[2][17] = {"<h2>Devices</h2>", "<h2>Events</h2>"};
-P(tHeader0) = "Name</th><th>Ch</th><th>Adr</th><th>N/T/C</th><th>N/V/A/S</th>";
-P(tHeader1) = "Dev ID</th><th>Ton</th><th>Don</th><th>Toff</th><th>Doff</th>";
-P(tableHeads) = "<thead><tr><th>";
-P(tableHeade) = "</thead>";
 P(devHead) = "<h2>Devices</h2>";
 P(eventsHead) = "<h2>Events</h2>";
-
-  webserver.print(tHead[startType]);
+  if (startType == 1) webserver.printP(devHead);
+    else webserver.printP(eventsHead);
   webserver.printP(tableStart0);
   webserver.printP(tableStart1);
   webserver.printP(tableStart3);
-  webserver.printP(tableHeads);
-  if (startType == 0) webserver.printP(tHeader0); 
-    else webserver.printP(tHeader1);
-  webserver.printP(tableHeade);
+  webserver.printP(tableHead0);
+  if (startType == 1) webserver.printP(tableHead1);  
+    else webserver.printP(tableHead2);
 }
 
 void setupCmd(WebServer &server, WebServer::ConnectionType type, char *, bool) {
@@ -653,7 +653,9 @@ int i, j;
     printPageStart(SETUP_POS);
     if (type != WebServer::HEAD)  {
       server.printP(postS);
-      printTableStart(0);
+      server.printP(postSettings);
+      server.printP(postE);
+      printTableStart(1);
      
       for (i = 0; i < DEV_MAX; i++) {
         // row start
@@ -674,7 +676,7 @@ int i, j;
       }
       server.printP(tableEnd);
       
-      printTableStart(1);
+      printTableStart(2);
       
       for (i = 0; i < EVENTS_MAX; i++) {
         // row start
@@ -876,14 +878,19 @@ boolean rcvCmd = false;
 
 // switch device on or off
 void switchOnOff(byte idx, boolean onoff) {
+  byte ch = getChannel(idx);
+  byte ad = getAddress(idx);
+
   dev.status[idx] = onoff;
 #ifdef USE_RECEIVER
   // disable receiving, not to interfere with actual command
   RemoteReceiver::disable();
 #endif
   
-  if (getMode(idx) == MODE_SPECIAL) send01(stp.specCode[getChannel(idx)]);
-    else actionTX.sendSignal(getChannel(idx), char(65 + getAddress(idx)), onoff);
+  if (getMode(idx) == MODE_SPECIAL) {
+    if (ad == 4) digitalWrite(ch, onoff);
+      else send01(stp.specCode[ch]);
+  } else actionTX.sendSignal(ch, char(65 + ad), onoff);
 
 #ifdef USE_RECEIVER
   // enable receiving
@@ -932,8 +939,8 @@ void setup() {
   webserver.addCommand("swt.html", &switchesCmd);
   webserver.setDefaultCommand(&switchesCmd);
   webserver.setFailureCommand(&failureCmd); 
-  webserver.addCommand("cfg.html", &setupCmd);
-  webserver.addCommand("cfgpost", &setupPost);
+  webserver.addCommand("stp.html", &setupCmd);
+  webserver.addCommand("setuppost", &setupPost);
 
   // reset dev.count 
   memset(dev.count, 0, sizeof(dev.count));
