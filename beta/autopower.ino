@@ -329,7 +329,7 @@ byte sdp;
   P(styleend) = "\n</style>\n";
   P(swdiv) = "\n#sw div{float:left;margin:0.5em;text-decoration:none;color:#066;display:block}";
   P(swdivswitch) = "\n#sw div.switch{min-width:9em;padding:1em 2em 1em 1em;border-right:1px solid #ccc;}";
-  P(swadd) = "\n#sw div.add0{border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.add1{border-right:1px solid #ccc;min-width:1em;padding:1em;}"; // was 1em 1em 1em 1em
+  P(swadd) = "\n#sw div.a0{border-right:0px;min-width:7em;padding:1em 0em 1em 1em;}\n#sw div.a1{border-right:1px solid #ccc;min-width:1em;padding:1em;}"; // was 1em 1em 1em 1em
   P(liahref) = "<li><a href=\"";
   P(ali) = "</a></li>";
   P(vn0) = "vacation";
@@ -337,7 +337,7 @@ byte sdp;
   P(nh1) = "\n<h1>";
   P(nsw) = "\n#sw";
   P(h1e) = "</h1>";
-  P(menuitem9) = "https://www.fb.com/autopow\">About";
+  P(menuitem9) = "http://www.fb.com/autopow\">About";
   P(failed) = "404 Not found!";
   P(unauth) = "401 Unauthorized!";
   P(cmd_vac) = "?vac=2\">";
@@ -450,8 +450,8 @@ P(a21) = "add=";
 P(a3) = "';\" style=\"cursor:pointer;\">";
 P(divsw) = "\n<div id=sw>\n";
 P(divsw_) = "\t<div class=\"switch ";
-P(divsadd) = " add0\"";
-P(divsadd10) = "\t<div class=\"add1\"";
+P(divsadd) = " a0\"";
+P(divsadd10) = "\t<div class=\"a1\"";
 P(divsadd11) = "+";
 P(divE) = "</div>\n";
 byte special;
@@ -642,7 +642,7 @@ P(eventsHead) = "<h2>Events</h2>";
 void setupCmd(WebServer &server, WebServer::ConnectionType type, char *, bool) {
 P(txt1) = "Vacation [days]:";
 P(tzo) = "Timezone [h]:";
-P(spec) = "Specials:";
+P(spec) = "Special:";
 P(otherHead) = "<h2>Other</h2>";
 P(br) = "<br/>";
 char tmpstr[10];
@@ -933,6 +933,15 @@ void setup() {
   Udp.begin(localPort);
   setSyncProvider(getTimeAndDate);
   setSyncInterval(ntpSyncTime);
+  
+  pinMode(3, OUTPUT);
+  #ifndef USE_RECEIVER
+  pinMode(3, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  #endif
  
   // init webserver
   webserver.begin();
