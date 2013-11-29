@@ -1030,4 +1030,3 @@ time_t getTimeAndDate() {
   return 0;
 }
 
-
