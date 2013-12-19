@@ -530,7 +530,7 @@ EthernetClient client;
             if (strcmp(name, "vac") == 0) setVacationMode(a);
             if (strcmp(name, "rea") == 0) {
               // place netio code here
-              server.write(dev.status[a])
+              server.write(dev.status[a]);
             }
             if (strcmp(name, "clk") == 0) setTime(getTimeAndDate());
             if (strcmp(name, "add") == 0) {
