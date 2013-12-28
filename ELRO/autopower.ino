@@ -863,7 +863,7 @@ void receiveCommand(unsigned long receivedCode, unsigned int period) {
 byte tmpCh = 0;
 byte tmpAdr = 0;
 byte i;
-unsigned long y;
+byte y;
 boolean rcvCmd = false;
 
 #ifdef USE_ACTION
