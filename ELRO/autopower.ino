@@ -1,5 +1,5 @@
 #define USE_RECEIVER
-
+// #define USE_DUPLICATES
 // #define USE_ACTION
 #define USE_ELRO
 
@@ -858,6 +858,19 @@ void setAutoOff(byte idx) {
 }
 
 #ifdef USE_RECEIVER
+
+#ifdef USE_DUPLICATES
+// check for copies of outlets, and switch them virtually on or off
+void checkDup(byte idx) {
+byte ch = getChannel(idx);
+byte ad = getAddress(idx);
+
+  for (byte i=0; i < DEV_MAX; i++) {
+    if (getChannel(i) == ch && getAddress(i) == ad) dev.status[i] = dev.status[idx];
+  }
+}
+#endif
+
 // receive command from original remote
 void receiveCommand(unsigned long receivedCode, unsigned int period) {
 byte tmpCh = 0;
@@ -867,33 +880,33 @@ byte y;
 boolean rcvCmd = false;
 
 #ifdef USE_ACTION
+  #define ONOFF_BIT 0
+  #define ADR_BIT 0
+  #define CHN_BIT 1
+#endif
+#ifdef USE_ELRO
+  #define ONOFF_BIT 2
+  #define ADR_BIT 0
+  #define CHN_BIT 0
+#endif
+
   // decode tribits for Action
   for (i=0; i<12; i++) {
     y = receivedCode % 3;
     receivedCode = receivedCode / 3;
     
-    if (i == 0 && y == 0) rcvCmd = true;
-    if (i >= 2 && i <= 6 && y == 0) tmpAdr = (6 - i);
-    if (i >= 7 && y == 1) bitSet(tmpCh, i - 7);
+    if (i == 0 && y == ONOFF_BIT) rcvCmd = true;
+    if (i >= 2 && i <= 6 && y == ADR_BIT) tmpAdr = (6 - i);
+    if (i >= 7 && y == CHN_BIT) bitSet(tmpCh, i - 7);
   }
-#endif
-
-#ifdef USE_ELRO
-  // decode tribits for ELRO
-  for (i=0; i<12; i++) {
-    y = receivedCode % 3;
-    receivedCode = receivedCode / 3;
-    
-    if (i == 0 && y == 2) rcvCmd = true;
-    if (i >= 2 && i <= 6 && y == 0) tmpAdr = (6 - i);
-    if (i >= 7 && y == 0) bitSet(tmpCh, i - 7);
-  }
-#endif
 
   for (i = 0; i < DEV_MAX; i++) {
     if (getChannel(i) == tmpCh && getAddress(i) == tmpAdr) {
       dev.status[i] = rcvCmd;
       if (rcvCmd == true) setAutoOff(i);
+      #ifdef USE_DUPLICATES
+      checkDup(i);
+      #endif
     }
   }
 }
@@ -914,6 +927,10 @@ void switchOnOff(byte idx, boolean onoff) {
     if (ad == 4) digitalWrite(ch, onoff);
       else send01(stp.specCode[ch]);
   } else actionTX.sendSignal(ch, char(65 + ad), onoff);
+  
+  #ifdef USE_DUPLICATES
+  checkDup(idx);
+  #endif
 
 #ifdef USE_RECEIVER
   // enable receiving
