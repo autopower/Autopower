@@ -8,14 +8,14 @@ You will need these parts:
 * Male to female jumper wires, if you don't wanna solder wires. Or Male to Male jumper wires and prototyping PCB board.
 * Soldering iron and simple wire, if you wanna extend range of receiver. 
 
-###Where you can get these gadgets?
+### Where you can get these gadgets?
 * [Arduino](http://arduino.cc/en/Main/ArduinoBoardUno),
 * [Ethernet shield](http://arduino.cc/en/Main/ArduinoEthernetShield),
 * [Arduino Ethernet](http://arduino.cc/en/Main/ArduinoBoardEthernet),
 * [433MHz receiver and transmitter](http://www.seeedstudio.com/depot/433mhz-rf-link-kit-p-127.html),
 * jumper wires, check your local store with electronic gadgets or dx.com.
 
-##Libraries you'll need to download
+## Libraries you'll need to download
 In any case of doubt or problem, please download libraries from [here](https://github.com/autopower/Autopower/tree/master/libraries).
 * Library for [sending and receiving RF 433MHz commands](https://bitbucket.org/fuzzillogic/433mhzforarduino/wiki/Home),
 * [Webduino library](https://github.com/sirleech/Webduino) for processing HTTP/HTML,
@@ -23,12 +23,12 @@ In any case of doubt or problem, please download libraries from [here](https://g
 * Other libraries are included in default installation of [Arduino IDE](http://arduino.cc/en/Main/Software) 1.0.5.
 
 
-##How to setup hardware
+## How to setup hardware
 Connect `DATA` pin of receiver to pin `digital 2` of Arduino (this is interrupt 0). VCC and GND connect to `5V` and `GND` on Arduino.
 Transmitter `DATA` pin connect to pin `digital 7` of Arduino (if you choose other pin, please change `TRANSMITTER_PIN` in `autopower.ino`). VCC and GND connect to `Vin` and `GND` of Arduino.
 Its recommended to connect 9V power adapter to enhance transmit range.
 
-##How to setup software
+## How to setup software
 To correctly setup Autpower, you must first edit, compile and upload sketch `setupap.ino` (in directory setupap/).
 Please edit following variables or constants:
 * if you need more that 12 characters for device name, change `#define NAMES_MAX 12`,
@@ -89,11 +89,11 @@ Supported remote controlled power outlets uses tribits switching, e.g. http://ww
 You can setup these outlets and remote controller by 10 DIP switches, first 5 DIPs for channel and rest of them, for address – A to E.
 Virtually you can control 32*5 = 160 power oulets.
 
-##Addressing
+## Addressing
 This is simple, setup your outlets and read out channel and address. Channel is first 5 DIP switches. If everything is off then channel is 0. Everything on, means you selected channel 31. Channel number is calculated as bits starting from least significant (16 + 8 + 4 + 2 + 1 = 31).
 Selecting address is even simplier. Just turn on desired DIP switch. First one is for A, last one for E.
 
-##Operating modes
+## Operating modes
 You can operate outlet in one of these three modes:
 * Normal [Nm], operated like classic RC outlet, can be switched on and off via button on webpage. Outlet can be cycled via simple POST request.
 * Time event driven [Tm], outlet can be switched on and off, in defined time and day.
@@ -109,18 +109,18 @@ If you need extend funcionality of outlet, you can do it by setting flag:
  
 If outlet is in Time event driven mode, it's on time can be extended byt plus sign displayed next to the outlet name.
 
-##Other features
+## Other features
 If you click on the clock, time will be renewed by time server.
 If you click on word `normal`, Autopower will be switched to vacation mode for 2 days (weekend) and this will be indicated by word `vacation`. If you again click on word vacation, vacation period will be extended by two days. if you need turn off vacation mode, please go to the setup and enter `0` (zero) into the vacation textbox and click save.
 
-##Commands
+## Commands
 To turn on or off device 10 just visit this webpage `http://ip_of_your_autopower/swt.html?cmd=9` (devices are numbered from 0, thus 9 is the 10th device).
 To turn on vacation mode for 10 days, just type in your browser `http://ip_of_your_autopower/swt.html?vac=10`. If you wanna turn off vacation mode use this: `http://ip_of_your_autopower/swt.html?vac=0`.
 
-##Security
+## Security
 If you asking why we using user/admin name and password an no SSL, answer is simple. Arduino Uno/Ethernet is not capable of SSL. So why user names and password? Because many family members can switch outlets, but few of them are able to setup these (you know what we mean :)). Yes, yes we know about sniffing and all that hacking skills. But remember, RF signals @433MHz are easy "hackable" via standalone simple remote controller. 
 
-##Examples
+## Examples
 * Setup outlet 1, channel 31, address A, time driven, no flag.
 * Setup outlet 2, channel 31, address B, normal, auto off.
 * Setup outlet 3, channel 0, address A, time drive, special.
