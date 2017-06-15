@@ -1,7 +1,7 @@
-#Autopower
+# Autopower
 Simple device managing power outlets - RF remote controlled. DIY device based on Arduino with Ethernet shield and 433MHz transmitter and receiver. Check out our [facebook profile](https://www.facebook.com/autopow).
 
-##Skull & Bones
+## Skull & Bones
 You will need these parts:
 * Arduino, you can choose from Arduino with Ethernet Shield or Arduino Ethernet. If you pickup Arduino Ethernet, there is [PoE](http://en.wikipedia.org/wiki/Power_over_Ethernet) version, which allows to use Ethernet wire as a power source for Arduino, e.g. one cable to Arduino means sleek look of boxed device.
 * 433MHz ASK transmitter, very cheap device. Please notice, that you need device with [ASK modulation](http://en.wikipedia.org/wiki/Amplitude-shift_keying). If you wanna use original remote controller, then you'll need 433MHz ASK receiver.
