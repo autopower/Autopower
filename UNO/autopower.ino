@@ -93,7 +93,7 @@ struct events_t {
 // ----------------------- NTP variables -----------------------         
 // IPAddress timeServer(158, 195, 19, 4);  // sk.pool.ntp.org
 // IPAddress timeServer(132, 163, 4, 101); // time-a.timefreq.bldrdoc.gov 
-const IPAddress timeServer(132, 163, 4, 102);    // time-b.timefreq.bldrdoc.gov
+const IPAddress timeServer(185, 28, 102, 19);    // 0.pool.ntp.org
 EthernetUDP Udp;                           // definition of udp packet
 byte packetBuffer[NTP_PACKET_SIZE];        // buffer to hold incoming and outgoing NTP packets 
 
