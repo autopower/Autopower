@@ -23,14 +23,14 @@
 #include "apsaveany.h"
 
 // ----------------------- DEFINE VALUES -----------------------
-#define VERSION_STRING "1.02"           // version, not used anywhere
+#define VERSION_STRING "1.03"           // version, not used anywhere
 #define NAMES_MAX 12                    // length of device names
 #define DEV_MAX 16                      // number of devices
 #define EVENTS_MAX 20                   // maximum number of events
 #define SPECIAL_MAX 3                   // maximum number of special codes
 #define NAMELEN 15                      // maximum length of POST name
 #define VALUELEN 15                     // maximum length of POST value
-#define ntpSyncTime SECS_PER_HOUR * 4   // how often sync time, in seconds
+#define ntpSyncTime (SECS_PER_HOUR * 4) // how often sync time, in seconds
 #define NTP_PACKET_SIZE 48              // NTP time stamp is in the first 48 bytes of the message
 #define localPort 8888                  // local port to listen for UDP packets
 #define FAILED 2                        // command num of failure msg
@@ -209,7 +209,7 @@ static char tempStr[4] = "abc";
 // -------------------------------------------------------
 void printTextBox(const bool pwd, const byte txtSize, const char *txtname, const char *txtvalue) {
   P(inp01) = "<input type=\"";
-  P(impmxl) = "\" maxlenth=\"";
+  P(impmxl) = "\" maxlength=\"";
   P(impsize) = "\" size=\"";
   P(impname) = "\" name=\"";
   P(password) = "password";
@@ -853,6 +853,7 @@ byte tmpAdr = 0;
 byte i;
 unsigned long y;
 boolean rcvCmd = false;
+boolean adrFound = false;           // ADD: latch flag
 
   // decode tribits
   for (i=0; i<12; i++) {
@@ -860,7 +861,10 @@ boolean rcvCmd = false;
     receivedCode = receivedCode / 3;
     
     if (i == 0 && y == 0) rcvCmd = true;
-    if (i >= 2 && i <= 6 && y == 0) tmpAdr = (6 - i);
+    if (i >= 2 && i <= 6 && y == 0 && !adrFound) {  // only take first match
+      tmpAdr = (6 - i);
+      adrFound = true;                               // lock out further writes
+    }
     if (i >= 7 && y == 1) bitSet(tmpCh, i - 7);
   }
 
