@@ -42,7 +42,7 @@
 #define DIVIDER 2                       // how many switches is on one row?
 #define FIRST_DOW 3                     // use this in code, 3 = Monday is day0, 4 = Sunday is day0
 #define REMOTE_SIGNAL_COUNT 3           // how many times must be signal from remote controller received
-#define NO_DEV DEV_MAX + 1              // ID for no_device
+#define NO_DEV DEV_MAX                  // ID for no_device
 #define TRANSMITTER_PIN 7               // where's the transmitter?, pin 7
 
 // mode listing
@@ -721,11 +721,11 @@ void setupPost(WebServer &server, WebServer::ConnectionType type, char *url_tail
 byte i, j, idx;
 long v;
 static byte offDay[EVENTS_MAX], onDay[EVENTS_MAX];
-char index[3];
+char index[3] = {0};
 boolean repeat;
 
   if(type == WebServer::POST) {
-    for (i == 0; i < EVENTS_MAX; i++) {
+    for (i = 0; i < EVENTS_MAX; i++) {
       onDay[i] = 0;
       offDay[i] = 0;
     }
@@ -918,8 +918,9 @@ void setup() {
 
   // start network DHCP or not
   if (stp.dhcp == true) {
-    do {
-    } while (Ethernet.begin(stp.mac) == 0); 
+    byte retries = 5;
+    while (Ethernet.begin(stp.mac) == 0 && --retries > 0) delay(1000);
+    if (retries == 0) Ethernet.begin(stp.mac, stp.ip, stp.dnsip, stp.gw, stp.mask);
   } else Ethernet.begin(stp.mac, stp.ip, stp.dnsip, stp.gw, stp.mask);
   
   // get NTP
@@ -968,7 +969,8 @@ byte mode, dIdx;
     if (vacEnd == 0 || mode == MODE_VACATION) {
       switch (getType(dIdx)) {
         case TYPE_NORMAL:
-          if (mode == MODE_AUTOOFF && nw >= dev.count[dIdx] && dev.status[dIdx] == true) switchOnOff(dIdx, false);
+          if (mode == MODE_AUTOOFF && dev.count[dIdx] != 0 && nw >= dev.count[dIdx] && dev.status[dIdx] == true)
+              switchOnOff(dIdx, false);
           break;
         case TYPE_TIMEDRIVEN:
           if (isTime(i, dIdx, true) == true) switchOnOff(dIdx, true);
@@ -976,7 +978,7 @@ byte mode, dIdx;
           break;
         case TYPE_COUNTED:
           nM = nowH * 60 + nowM;
-          if (dev.status[i]) {
+          if (dev.status[dIdx]) {
             cM = hour(dev.count[dIdx]) * 60 + minute(dev.count[dIdx]);
             oM = hour(events.t_off[i]) * 60 + minute(events.t_off[i]);
             if (nM > cM + oM) switchOnOff(dIdx, false);
@@ -1027,6 +1029,6 @@ time_t getTimeAndDate() {
       return secsSince1900 - 2208988800UL + stp.timeZoneOffset * SECS_PER_HOUR;
     }
   }
-  return 0;
+  return now();
 }
 
